@@ -24,7 +24,8 @@ contract BetCandidate {
     mapping (address => Bet) public allBets;
 
     address owner;
-    uint fee = 10; //%
+    uint fee = 10000; //%
+    uint public netPrize;
 
     constructor(){
         owner = msg.sender;
@@ -55,5 +56,19 @@ contract BetCandidate {
             dispute.total1 += msg.value;
         else 
             dispute.total2 += msg.value;
+    }
+
+    function finish(uint winner) external {
+        require(msg.sender == owner, "Invalid account");
+        require(winner == 1 || winner == 2, "Invalid winner");
+        require(dispute.winner == 0, "Dispute closed");
+
+        dispute.winner = winner;
+
+        uint grossPrize = dispute.total1 + dispute.total2;
+        uint commission = (grossPrize * fee) / 1e4;
+        netPrize = grossPrize - commission;
+
+        payable(owner).transfer(commission);
     }
 }
